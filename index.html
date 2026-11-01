@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora de Impressão 3D</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --fundo: #f4f5f7;
+    --cartao: #ffffff;
+    --texto: #1c1f24;
+    --suave: #626975;
+    --borda: #cdd2da;
+    --destaque: #0f6e5c;
+    --erro: #b3261e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fundo: #15171b;
+      --cartao: #1f2228;
+      --texto: #eceef1;
+      --suave: #a0a7b3;
+      --borda: #3b404a;
+      --destaque: #4fd1b5;
+      --erro: #ff8a80;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 40px;
+    background: var(--fundo);
+    color: var(--texto);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin: 0 0 20px; }
+  h2 { font-size: 1.05rem; margin: 0 0 14px; }
+  .grade {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  section {
+    background: var(--cartao);
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .resultado { grid-column: 1 / -1; }
+  label { display: block; margin-bottom: 14px; font-weight: 600; }
+  label small {
+    display: block;
+    font-weight: 400;
+    color: var(--suave);
+    margin-top: 4px;
+  }
+  .dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .campo { position: relative; display: block; margin-top: 4px; }
+  .campo span {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--suave);
+    font-weight: 400;
+    pointer-events: none;
+  }
+  .campo .antes { left: 11px; }
+  .campo .depois { right: 11px; }
+  input {
+    width: 100%;
+    padding: 10px 11px;
+    font: inherit;
+    font-weight: 400;
+    color: inherit;
+    background: transparent;
+    border: 1px solid var(--borda);
+    border-radius: 7px;
+  }
+  .campo:has(.antes) input { padding-left: 38px; }
+  input:focus { outline: 2px solid var(--destaque); outline-offset: 1px; }
+  input[aria-invalid="true"] { border-color: var(--erro); }
+  button {
+    padding: 8px 12px;
+    font: inherit;
+    color: inherit;
+    background: transparent;
+    border: 1px solid var(--borda);
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--destaque); }
+  .valor-final { margin: 0 0 12px; color: var(--suave); }
+  .valor-final strong {
+    display: block;
+    font-size: 2.4rem;
+    line-height: 1.2;
+    color: var(--destaque);
+    font-variant-numeric: tabular-nums;
+  }
+  dl {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 0;
+  }
+  dt { color: var(--suave); }
+  dd {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  #aviso { min-height: 1.45em; margin: 12px 0 0; color: var(--erro); }
+  @media (max-width: 640px) {
+    .grade { grid-template-columns: 1fr; }
+    .resultado { grid-row: 2; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Calculadora de Impressão 3D</h1>
+
+  <form class="grade" id="formulario" autocomplete="off" onsubmit="return false">
+    <section>
+      <h2>Esta peça</h2>
+      <label>Filamento usado
+        <span class="campo"><input id="gramas" inputmode="decimal" placeholder="0"><span class="depois">g</span></span>
+      </label>
+      <div class="dupla">
+        <label>Horas de impressão
+          <span class="campo"><input id="horas" inputmode="decimal" placeholder="0"><span class="depois">h</span></span>
+        </label>
+        <label>Minutos
+          <span class="campo"><input id="minutos" inputmode="decimal" placeholder="0"><span class="depois">min</span></span>
+        </label>
+      </div>
+      <label>Mão de obra
+        <span class="campo"><span class="antes">R$</span><input id="maoDeObra" inputmode="decimal" placeholder="0,00"></span>
+      </label>
+    </section>
+
+    <section>
+      <h2>Seus valores</h2>
+      <label>Preço de venda do filamento
+        <span class="campo"><span class="antes">R$</span><input id="precoFilamento" inputmode="decimal"><span class="depois">por grama</span></span>
+      </label>
+      <label>Custo do filamento
+        <span class="campo"><span class="antes">R$</span><input id="custoFilamento" inputmode="decimal"><span class="depois">por grama</span></span>
+        <small>Exemplo: rolo de 1 kg por R$ 110 dá 0,11 por grama.</small>
+      </label>
+      <label>Custo de energia e uso da impressora
+        <span class="campo"><span class="antes">R$</span><input id="custoEnergia" inputmode="decimal"><span class="depois">por hora</span></span>
+      </label>
+      <button type="button" id="restaurar">Restaurar valores padrão</button>
+    </section>
+
+    <section class="resultado" aria-live="polite">
+      <p class="valor-final">Valor final<strong id="valorFinal"></strong></p>
+      <dl>
+        <div><dt>Custo de produção</dt><dd id="custoProducao"></dd></div>
+        <div><dt>Lucro</dt><dd id="lucro"></dd></div>
+      </dl>
+      <p id="aviso"></p>
+    </section>
+  </form>
+</main>
+
+<script>
+  const CHAVE = 'calculadora-3d';
+  const PADRAO = { precoFilamento: '0,50', custoFilamento: '0,11', custoEnergia: '2,00' };
+  const SALVOS = [...Object.keys(PADRAO), 'maoDeObra'];
+  const CAMPOS = ['gramas', 'horas', 'minutos', ...SALVOS];
+
+  const campo = id => document.getElementById(id);
+  const moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  // Aceita "1,50", "1.50" e "1.234,50". Campo vazio vale 0; texto inválido vira NaN.
+  function lerNumero(texto) {
+    const limpo = texto.trim();
+    if (!limpo) return 0;
+    const normal = limpo.includes(',') ? limpo.replace(/\./g, '').replace(',', '.') : limpo;
+    return /^(\d+\.?\d*|\.\d+)$/.test(normal) ? Number(normal) : NaN;
+  }
+
+  function calcular(v) {
+    const tempo = v.horas + v.minutos / 60;
+    const energia = v.custoEnergia * tempo;
+    const custoProducao = v.gramas * v.custoFilamento + energia + v.maoDeObra;
+    const valorFinal = v.gramas * v.precoFilamento + energia + v.maoDeObra;
+    return { custoProducao, valorFinal, lucro: valorFinal - custoProducao };
+  }
+
+  function salvar() {
+    const dados = Object.fromEntries(SALVOS.map(id => [id, campo(id).value]));
+    try { localStorage.setItem(CHAVE, JSON.stringify(dados)); } catch {}
+  }
+
+  function carregar() {
+    let dados = {};
+    try { dados = JSON.parse(localStorage.getItem(CHAVE)) || {}; } catch {}
+    for (const id of SALVOS) campo(id).value = dados[id] ?? PADRAO[id] ?? '';
+  }
+
+  function atualizar() {
+    const valores = {};
+    let valido = true;
+    for (const id of CAMPOS) {
+      valores[id] = lerNumero(campo(id).value);
+      const invalido = Number.isNaN(valores[id]);
+      campo(id).setAttribute('aria-invalid', invalido);
+      if (invalido) valido = false;
+    }
+
+    const r = valido ? calcular(valores) : null;
+    for (const id of ['valorFinal', 'custoProducao', 'lucro']) {
+      campo(id).textContent = r ? moeda.format(r[id]) : '—';
+    }
+    campo('aviso').textContent = valido ? '' : 'Use apenas números nos campos marcados.';
+  }
+
+  campo('formulario').addEventListener('input', () => { salvar(); atualizar(); });
+  campo('restaurar').addEventListener('click', () => {
+    for (const [id, valor] of Object.entries(PADRAO)) campo(id).value = valor;
+    salvar();
+    atualizar();
+  });
+
+  carregar();
+  atualizar();
+</script>
+</body>
+</html>
